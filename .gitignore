@@ -1,0 +1,25 @@
+# Build output
+/target/
+*.jar
+*.war
+
+# Maven wrapper
+/.mvn/
+
+# Maven generated
+dependency-reduced-pom.xml
+release.properties
+
+# IDEs and OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local config (do not commit)
+src/main/resources/application.properties
+EOF
