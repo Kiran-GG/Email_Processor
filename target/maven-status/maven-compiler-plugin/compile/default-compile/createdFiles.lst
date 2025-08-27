@@ -1,0 +1,4 @@
+com\kintone\email\EmailProcessorLambda.class
+com\kintone\email\EmailProcessor.class
+com\kintone\email\EmailProcessor$EmailData.class
+com\kintone\email\KintoneClient.class

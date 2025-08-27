@@ -1,0 +1,174 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS Lambda for SES → S3 → Kintone integration
+
+Parameters:
+  EmailBucketName:
+    Type: String
+    Default: Your bucket
+    Description: S3 bucket name for SES emails (will be created if not existing)
+
+  JarBucketName:
+    Type: String
+    Default: Your bucket
+    Description: S3 bucket where your JAR is stored
+
+  JarFileKey:
+    Type: String
+    Default: Your.jar
+    Description: S3 key (file name) for the Lambda JAR
+
+  KintoneDomain:
+    Type: String
+    Default: your domain
+    Description: Kintone domain (only domain, no protocol or path)
+
+  KintoneApiKey:
+    Type: String
+    Default: Your key
+    Description: Kintone API key (used as apiToken in code)
+
+  KintoneAppId:
+    Type: String
+    Default: "appid"
+    Description: Kintone App ID
+
+  VerifiedRecipientEmail:
+    Type: String
+    Default: mailid
+    Description: SES verified recipient email address
+
+  SESRuleSetName:
+    Type: String
+    Default: ruleset
+    Description: The name of your SES Rule Set (created by this template)
+
+Resources:
+
+  EmailS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref EmailBucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      NotificationConfiguration:                
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt EmailProcessorLambda.Arn
+
+  EmailS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref EmailS3Bucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowSESPutObject
+            Effect: Allow
+            Principal:
+              Service: ses.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub arn:aws:s3:::${EmailBucketName}/*
+            Condition:
+              StringEquals:
+                aws:SourceAccount: !Ref AWS::AccountId
+
+  SESEmailReceiptLoggingTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: ses-email-receipt-logging-topic
+
+  SESReceiptRuleSet:
+    Type: AWS::SES::ReceiptRuleSet
+    Properties:
+      RuleSetName: !Ref SESRuleSetName
+
+  LambdaSESExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: LambdaBasicS3Execution
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub arn:aws:s3:::${EmailBucketName}/*
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+
+  EmailProcessorLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: com.kintone.email.EmailProcessorLambda::handleRequest
+      Role: !GetAtt LambdaSESExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref JarBucketName
+        S3Key: !Ref JarFileKey
+      Runtime: java11
+      MemorySize: 512
+      Timeout: 30
+
+  LambdaPermissionForSES:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref EmailProcessorLambda
+      Principal: ses.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+
+  LambdaPermissionForS3:                      
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref EmailProcessorLambda
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub arn:aws:s3:::${EmailBucketName}
+
+  EmailReceiptRule:
+    Type: AWS::SES::ReceiptRule
+    DependsOn:
+      - EmailS3Bucket
+      - EmailS3BucketPolicy
+    Properties:
+      RuleSetName: !Ref SESRuleSetName
+      Rule:
+        Name: EmailToS3AndLambdaAndSNS
+        Enabled: true
+        Recipients:
+          - !Ref VerifiedRecipientEmail
+        Actions:
+          - S3Action:
+              BucketName: !Ref EmailBucketName
+              ObjectKeyPrefix: emails/
+          - LambdaAction:
+              FunctionArn: !GetAtt EmailProcessorLambda.Arn
+              InvocationType: Event
+          - SNSAction:
+              TopicArn: !Ref SESEmailReceiptLoggingTopic
+        ScanEnabled: true
+
+Outputs:
+  LambdaFunctionName:
+    Description: Name of Lambda function
+    Value: !Ref EmailProcessorLambda
+
+  EmailBucketNameOut:
+    Description: S3 bucket for incoming emails
+    Value: !Ref EmailBucketName
+
+  LambdaExecutionRoleArn:
+    Description: Lambda execution IAM role ARN
+    Value: !GetAtt LambdaSESExecutionRole.Arn
