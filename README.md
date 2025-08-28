@@ -26,16 +26,20 @@ Maven
    cd Email_Processor
 
 2. Update your details in properties file.
+
    # AWS
+
    aws.region=YOUR_REGION
    aws.s3.bucket= YOUR_BUCKET_NAME
 
    # Kintone
+
    kintone.domain=YOUR_DOMAIN_NAME
    kintone.apiToken=YOUR_API_OKEN
    kintone.appId=YOUR_APP_ID
 
 2. Update the following parameters in yourCloudFormation template.
+
    EmailBucketName=YOUR_BUCKET_NAME
    JarBucketName=YOUR_BUCKET_NAME
    JarFileKey=YOUR_APPLICATION_JAR.jar
@@ -46,6 +50,7 @@ Maven
    SESRulesetName=RULESET
 
 3. CloudFormation Stack Deployment.
+
    ## Deployment Using CloudFormation
    You can deploy the application stack using the AWS CLI. Make sure you have AWS CLI installed and configured.
 
