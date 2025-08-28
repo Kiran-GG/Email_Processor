@@ -4,43 +4,43 @@ Description: AWS Lambda for SES → S3 → Kintone integration
 Parameters:
   EmailBucketName:
     Type: String
-    Default: Your bucket
-    Description: S3 bucket name for SES emails (will be created if not existing)
+    Default: YOUR_BUCKET_NAME
+    Description: S3 bucket name for SES emails
 
   JarBucketName:
     Type: String
-    Default: Your bucket
+    Default: YOUR_BUCKET_NAME
     Description: S3 bucket where your JAR is stored
 
   JarFileKey:
     Type: String
-    Default: Your.jar
-    Description: S3 key (file name) for the Lambda JAR
+    Default: YOUR_APPLICATION_JAR.jar
+    Description: S3 key FILE_NAME for the Lambda JAR
 
   KintoneDomain:
     Type: String
-    Default: your domain
-    Description: Kintone domain (only domain, no protocol or path)
+    Default: YOUR_DOMAIN_NAME
+    Description: Kintone domain 
 
   KintoneApiKey:
     Type: String
-    Default: Your key
-    Description: Kintone API key (used as apiToken in code)
+    Default: YOUR_API_KEY
+    Description: Kintone API key 
 
   KintoneAppId:
     Type: String
-    Default: "appid"
+    Default: "YOUR_APP_ID"
     Description: Kintone App ID
 
   VerifiedRecipientEmail:
     Type: String
-    Default: mailid
+    Default: VERIFIED_MAIL_ID
     Description: SES verified recipient email address
 
   SESRuleSetName:
     Type: String
-    Default: ruleset
-    Description: The name of your SES Rule Set (created by this template)
+    Default: RULESET
+    Description: The name of your SES Rule Set 
 
 Resources:
 
