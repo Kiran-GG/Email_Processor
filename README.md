@@ -38,7 +38,7 @@ Maven
    kintone.apiToken=YOUR_API_OKEN
    kintone.appId=YOUR_APP_ID
 
-2. Update the following parameters in yourCloudFormation template.
+3. Update the following parameters in yourCloudFormation template.
 
    EmailBucketName=YOUR_BUCKET_NAME
    JarBucketName=YOUR_BUCKET_NAME
@@ -49,7 +49,7 @@ Maven
    VerifiedRecipientEmail=VERIFIED_MAIL_ID
    SESRulesetName=RULESET
 
-3. CloudFormation Stack Deployment.
+4. CloudFormation Stack Deployment.
 
    ## Deployment Using CloudFormation
    You can deploy the application stack using the AWS CLI. Make sure you have AWS CLI installed and configured.
